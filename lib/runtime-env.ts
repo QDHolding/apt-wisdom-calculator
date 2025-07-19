@@ -1,5 +1,5 @@
 // Runtime environment variable loader for production
-export function loadRuntimeEnv() {
+export function loadRuntimeEnv(): void {
   // In production, try to load from multiple sources
   if (typeof window === 'undefined') {
     // Server-side: try direct process.env and file system
@@ -10,19 +10,26 @@ export function loadRuntimeEnv() {
       const envFile = path.join(process.cwd(), '.env.production');
       
       if (fs.existsSync(envFile)) {
-        const envContent = fs.readFileSync(envFile, 'utf-8');
-        const envVars = envContent.split('\n')
-          .filter(line => line.includes('='))
-          .reduce((acc, line) => {
-            const [key, ...values] = line.split('=');
-            acc[key.trim()] = values.join('=').trim();
+        const envContent: string = fs.readFileSync(envFile, 'utf-8');
+        const envVars: Record<string, string> = envContent
+          .split('\n')
+          .filter((line: string) => line.trim() && line.includes('=') && !line.startsWith('#'))
+          .reduce((acc: Record<string, string>, line: string) => {
+            const equalIndex = line.indexOf('=');
+            if (equalIndex > 0) {
+              const key = line.substring(0, equalIndex).trim();
+              const value = line.substring(equalIndex + 1).trim();
+              acc[key] = value;
+            }
             return acc;
-          }, {} as Record<string, string>);
+          }, {});
         
         // Merge with process.env
         Object.assign(process.env, envVars);
         
         console.log('Loaded environment variables from .env.production:', Object.keys(envVars));
+      } else {
+        console.log('No .env.production file found at:', envFile);
       }
     } catch (error) {
       console.error('Failed to load .env.production:', error);
