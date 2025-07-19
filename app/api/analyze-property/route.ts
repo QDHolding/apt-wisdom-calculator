@@ -8,21 +8,37 @@ export async function POST(request: NextRequest) {
     const directEnv = process.env.OPENAI_API_KEY;
     const configEnv = config.openai.apiKey;
     
+    // Safe substring function
+    const safeSubstring = (str: any): string => {
+      if (typeof str === 'string' && str.length > 0) {
+        return str.substring(0, 8);
+      }
+      return 'not-found';
+    };
+    
     console.log('Enhanced environment check:', {
       hasDirectEnv: !!directEnv,
       hasConfigEnv: !!configEnv,
-      directLength: directEnv?.length || 0,
-      configLength: configEnv?.length || 0,
-      directPrefix: directEnv?.substring(0, 8) || 'not-found',
-      configPrefix: configEnv?.substring(0, 8) || 'not-found',
+      directType: typeof directEnv,
+      configType: typeof configEnv,
+      directLength: (typeof directEnv === 'string') ? directEnv.length : 0,
+      configLength: (typeof configEnv === 'string') ? configEnv.length : 0,
+      directPrefix: safeSubstring(directEnv),
+      configPrefix: safeSubstring(configEnv),
       nodeEnv: process.env.NODE_ENV,
       allEnvKeys: Object.keys(process.env).filter(key => key.includes('OPENAI')),
     })
 
-    // Use the config system with fallbacks
-    const apiKey = configEnv || directEnv;
+    // Use the config system with fallbacks and ensure it's a valid string
+    let apiKey = configEnv || directEnv;
     
-    if (!apiKey) {
+    // Ensure API key is a valid string
+    if (apiKey && typeof apiKey !== 'string') {
+      console.error('API key is not a string:', typeof apiKey, apiKey);
+      apiKey = String(apiKey);
+    }
+    
+    if (!apiKey || typeof apiKey !== 'string' || apiKey.length < 20) {
       return NextResponse.json(
         { 
           error: 'OpenAI API key not configured',
@@ -30,6 +46,8 @@ export async function POST(request: NextRequest) {
           debug: {
             hasDirectEnv: !!directEnv,
             hasConfigEnv: !!configEnv,
+            directType: typeof directEnv,
+            configType: typeof configEnv,
             envKeys: Object.keys(process.env).filter(key => key.includes('OPENAI')),
           }
         },

@@ -1,10 +1,16 @@
 // Environment variable configuration with fallbacks
 export const getEnvVar = (key: string): string | undefined => {
   // Try multiple sources for environment variables
-  const value = 
+  let value: any = 
     process.env[key] ||                    // Standard process.env
     (global as any).__ENV__?.[key] ||      // Global fallback
     (typeof window !== 'undefined' && (window as any).__ENV__?.[key]); // Client-side fallback
+
+  // Ensure the value is a string or undefined
+  if (value !== undefined && typeof value !== 'string') {
+    console.warn(`Environment variable ${key} is not a string:`, typeof value, value);
+    value = String(value);
+  }
 
   if (!value) {
     console.warn(`Environment variable ${key} not found`);
