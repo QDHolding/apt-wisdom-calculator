@@ -8,10 +8,14 @@ frontend:
         - nvm alias default 18.19.0
         - node --version
         - npm --version
+        - echo "Checking environment variables..."
+        - env | grep -E "(OPENAI|STRIPE)" || echo "No API keys found in environment"
         - npm ci --legacy-peer-deps
     build:
       commands:
         - nvm use 18.19.0
+        - echo "Pre-build environment check..."
+        - env | grep -E "(OPENAI|STRIPE)" || echo "No API keys found before build"
         - npm run build
   artifacts:
     baseDirectory: .next

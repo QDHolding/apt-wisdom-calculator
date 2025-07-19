@@ -1,21 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generatePropertyAnalysis, type PropertyData } from '@/services/ai-analysis-service'
+import { config } from '@/lib/env-config'
 
 export async function POST(request: NextRequest) {
   try {
-    // Debug: Log environment variable status (without exposing the key)
-    console.log('Environment check:', {
-      hasOpenAIKey: !!process.env.OPENAI_API_KEY,
-      keyLength: process.env.OPENAI_API_KEY?.length || 0,
-      keyPrefix: process.env.OPENAI_API_KEY?.substring(0, 8) || 'not-found'
+    // Enhanced debugging with multiple environment sources
+    const directEnv = process.env.OPENAI_API_KEY;
+    const configEnv = config.openai.apiKey;
+    
+    console.log('Enhanced environment check:', {
+      hasDirectEnv: !!directEnv,
+      hasConfigEnv: !!configEnv,
+      directLength: directEnv?.length || 0,
+      configLength: configEnv?.length || 0,
+      directPrefix: directEnv?.substring(0, 8) || 'not-found',
+      configPrefix: configEnv?.substring(0, 8) || 'not-found',
+      nodeEnv: process.env.NODE_ENV,
+      allEnvKeys: Object.keys(process.env).filter(key => key.includes('OPENAI')),
     })
 
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
+    // Use the config system with fallbacks
+    const apiKey = configEnv || directEnv;
+    
+    if (!apiKey) {
       return NextResponse.json(
         { 
           error: 'OpenAI API key not configured',
-          details: 'Please set OPENAI_API_KEY in your environment variables'
+          details: 'Please set OPENAI_API_KEY in your environment variables. Debug info logged.',
+          debug: {
+            hasDirectEnv: !!directEnv,
+            hasConfigEnv: !!configEnv,
+            envKeys: Object.keys(process.env).filter(key => key.includes('OPENAI')),
+          }
         },
         { status: 500 }
       )
