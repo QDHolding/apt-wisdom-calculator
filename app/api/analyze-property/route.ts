@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generatePropertyAnalysis, type PropertyData } from '@/services/ai-analysis-service'
 import { config } from '@/lib/env-config'
+import '@/lib/runtime-env' // Load runtime environment variables
 
 export async function POST(request: NextRequest) {
   try {
+    // Force reload environment variables
+    delete require.cache[require.resolve('@/lib/env-config')];
+    
     // Enhanced debugging with multiple environment sources
     const directEnv = process.env.OPENAI_API_KEY;
     const configEnv = config.openai.apiKey;
+    
+    // Debug all environment variables
+    console.log('All process.env keys:', Object.keys(process.env).sort());
+    console.log('Environment variables containing OPENAI:', 
+      Object.keys(process.env).filter(key => key.toLowerCase().includes('openai')));
+    console.log('Raw process.env.OPENAI_API_KEY:', JSON.stringify(process.env.OPENAI_API_KEY));
     
     // Safe substring function
     const safeSubstring = (str: any): string => {

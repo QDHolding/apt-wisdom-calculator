@@ -8,14 +8,25 @@ frontend:
         - nvm alias default 18.19.0
         - node --version
         - npm --version
-        - echo "Checking environment variables..."
-        - env | grep -E "(OPENAI|STRIPE)" || echo "No API keys found in environment"
+        - echo "Checking all environment variables..."
+        - env | sort
+        - echo "Creating .env.production file..."
+        - echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> .env.production
+        - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
+        - echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY" >> .env.production
+        - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production
+        - echo "NODE_ENV=production" >> .env.production
+        - echo "Contents of .env.production:"
+        - cat .env.production
         - npm ci --legacy-peer-deps
     build:
       commands:
         - nvm use 18.19.0
-        - echo "Pre-build environment check..."
-        - env | grep -E "(OPENAI|STRIPE)" || echo "No API keys found before build"
+        - echo "Final environment check before build..."
+        - cat .env.production
+        - export $(cat .env.production | xargs)
+        - echo "Exported environment variables:"
+        - env | grep -E "(OPENAI|STRIPE|NODE_ENV)" || echo "No API keys found"
         - npm run build
   artifacts:
     baseDirectory: .next
