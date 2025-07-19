@@ -3,6 +3,13 @@ import { generatePropertyAnalysis, type PropertyData } from '@/services/ai-analy
 
 export async function POST(request: NextRequest) {
   try {
+    // Debug: Log environment variable status (without exposing the key)
+    console.log('Environment check:', {
+      hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+      keyLength: process.env.OPENAI_API_KEY?.length || 0,
+      keyPrefix: process.env.OPENAI_API_KEY?.substring(0, 8) || 'not-found'
+    })
+
     // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
